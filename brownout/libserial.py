@@ -1,6 +1,7 @@
 # Serial port abstraction and config utilities
-# 1/4/09
+# 2/4/09
 
+import gobject
 import gtk
 import os.path
 import serial
@@ -62,33 +63,43 @@ class SerialChooser(gtk.HBox):
     def _on_serial_port_changed(self, cb):
         port = cb.get_active_text()
         if port == DUMMY_PORT:
-            self._sender.disconnect()
+            self._sender.disconnect_from_port()
             self._image.set_from_stock(gtk.STOCK_NO, gtk.ICON_SIZE_BUTTON)
         else:
-            if self._sender.connect(port=port):
+            if self._sender.connect_to_port(port=port):
                 self._image.set_from_stock(gtk.STOCK_YES, gtk.ICON_SIZE_BUTTON)
             else:
                 self._image.set_from_stock(gtk.STOCK_NO, gtk.ICON_SIZE_BUTTON)
 
     def _on_serial_speed_changed(self, cb):
         speed = cb.get_active_text()
-        if self._sender.connect(speed=int(speed)):
+        if self._sender.connect_to_port(speed=int(speed)):
             self._image.set_from_stock(gtk.STOCK_YES, gtk.ICON_SIZE_BUTTON)
         else:
             self._image.set_from_stock(gtk.STOCK_NO, gtk.ICON_SIZE_BUTTON)
 
-class SerialSender:
+class SerialSender(gobject.GObject):
+
+    __gsignals__ = {
+        "serial-connected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, [
+            gobject.TYPE_BOOLEAN]),     #True if successfully connected to the port
+        }
+
     def __init__(self, port="/dev/null", speed=9600, timeout=1):
+        gobject.GObject.__init__(self)
         self._serial = None
         self._port = port
         self._speed = speed
         self._timeout = timeout
         self._opened = False
 
+    def get_serial(self):
+        return self._serial
+
     def is_open(self):
         return self._opened
 
-    def connect(self, port=None, speed=None):
+    def connect_to_port(self, port=None, speed=None):
         """
         Opens the port
         """
@@ -111,9 +122,10 @@ class SerialSender:
             except serial.SerialException:
                 self._opened = False
 
+        self.emit("serial-connected", self._opened)
         return self._opened
 
-    def disconnect(self):
+    def disconnect_from_port(self):
         if self._opened:
             self._serial.close()
             self._opened = False

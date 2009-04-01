@@ -24,16 +24,16 @@ class SerialChooser(gtk.HBox):
 
         #populate the combo with available serial ports
         ports = [DUMMY_PORT] + self.get_ports()
-        ports = self._build_combo(*ports)
-        ports.connect("changed", self._on_serial_port_changed)
+        self._portcb = self._build_combo(*ports)
+        self._portcb.connect("changed", self._on_serial_port_changed)
 
         #and available speeds
-        speeds = self._build_combo(*self.get_speeds())
-        speeds.connect("changed", self._on_serial_speed_changed)
+        self._speedcb = self._build_combo(*self.get_speeds())
+        self._speedcb.connect("changed", self._on_serial_speed_changed)
 
         self.pack_start(self._image, False)
-        self.pack_start(ports, expand=True)
-        self.pack_start(speeds, expand=False)
+        self.pack_start(self._portcb, expand=True)
+        self.pack_start(self._speedcb, expand=False)
 
     def _build_combo(self, *toModel):
         cb = gtk.ComboBox()
@@ -60,23 +60,25 @@ class SerialChooser(gtk.HBox):
     def get_speeds():
         return [9600, 19200, 38400, 57600, 115200]
 
-    def _on_serial_port_changed(self, cb):
-        port = cb.get_active_text()
+    def _connect(self, port, speed):
         if port == DUMMY_PORT:
             self._sender.disconnect_from_port()
             self._image.set_from_stock(gtk.STOCK_NO, gtk.ICON_SIZE_BUTTON)
         else:
-            if self._sender.connect_to_port(port=port):
+            if self._sender.connect_to_port(port=port, speed=speed):
                 self._image.set_from_stock(gtk.STOCK_YES, gtk.ICON_SIZE_BUTTON)
             else:
                 self._image.set_from_stock(gtk.STOCK_NO, gtk.ICON_SIZE_BUTTON)
 
+    def _on_serial_port_changed(self, cb):
+        port = self._portcb.get_active_text()
+        speed = int(self._speedcb.get_active_text())
+        self._connect(port, speed)
+
     def _on_serial_speed_changed(self, cb):
-        speed = cb.get_active_text()
-        if self._sender.connect_to_port(speed=int(speed)):
-            self._image.set_from_stock(gtk.STOCK_YES, gtk.ICON_SIZE_BUTTON)
-        else:
-            self._image.set_from_stock(gtk.STOCK_NO, gtk.ICON_SIZE_BUTTON)
+        port = self._portcb.get_active_text()
+        speed = int(self._speedcb.get_active_text())
+        self._connect(port, speed)
 
 class SerialSender(gobject.GObject):
 

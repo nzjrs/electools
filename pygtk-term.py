@@ -7,15 +7,15 @@ import brownout.HexView as hexview
 
 class UI:
     def __init__(self):
-        w = gtk.Window()
-        vb = gtk.VBox()
-        w.add(vb)
+        vb = gtk.VBox(spacing=4)
+        vb.set_border_width(4)
 
         serial = libserial.SerialSender()
         sc = libserial.SerialChooser(serial)
         vb.pack_start(sc, expand=False, fill=False)
 
         term = vte.Terminal()
+        term.feed("hello world")
         vb.pack_start(term, expand=True, fill=True)
 
         entry = rawentry.MyEntry()
@@ -28,6 +28,8 @@ class UI:
         vb.pack_start(expander, expand=False, fill=False)
         self.hv = None
 
+        w = gtk.Window()
+        w.add(vb)
         w.connect('delete-event', lambda *w: gtk.main_quit())
         w.show_all()
 
@@ -35,6 +37,7 @@ class UI:
         if expander.get_expanded():
             if not self.hv:
                 self.hv = hexview.HexView()
+                self.hv.set_border_width(0)
                 expander.add(self.hv)
             expander.show_all()
         else:

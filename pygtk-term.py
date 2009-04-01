@@ -7,18 +7,20 @@ import brownout.HexView as hexview
 
 class UI:
     def __init__(self):
+        self.echo = True
+
         vb = gtk.VBox(spacing=4)
         vb.set_border_width(4)
 
-        serial = libserial.SerialSender()
-        sc = libserial.SerialChooser(serial)
+        self.serial = libserial.SerialSender()
+        sc = libserial.SerialChooser(self.serial)
         vb.pack_start(sc, expand=False, fill=False)
 
-        term = vte.Terminal()
-        term.feed("hello world")
-        vb.pack_start(term, expand=True, fill=True)
+        self.term = vte.Terminal()
+        vb.pack_start(self.term, expand=True, fill=True)
 
         entry = rawentry.MyEntry()
+        entry.connect("activate", self._on_entry_activate)
         vb.pack_start(entry, expand=False, fill=False)
 
         #store the hex view in an expander, only create said view
@@ -32,6 +34,14 @@ class UI:
         w.add(vb)
         w.connect('delete-event', lambda *w: gtk.main_quit())
         w.show_all()
+
+    def _on_entry_activate(self, entry):
+        txt = entry.get_raw_text()
+
+        if self.echo:
+            self.term.feed(txt)
+            if self.hv:
+                self.hv.set_payload(txt)
 
     def _expander_callback(self, expander, *args):
         if expander.get_expanded():

@@ -67,7 +67,6 @@ class MyEntry(gtk.Entry):
 
         self.connect("changed", self._on_change)
         self.connect("expose-event", self._on_expose)
-        self.connect("activate", self._on_activate)
 
     def _get_value(self, chunk):
         print "###", chunk
@@ -124,13 +123,14 @@ class MyEntry(gtk.Entry):
         self.get_layout().set_markup(self._markup)
         self.get_layout().set_font_description(self._font)
 
-    def _on_activate(self, *args):
-        if self._hasnumber:
-            txt = "".join([v.as_string() for v in self._values])
-        else:
-            txt = " ".join([v.as_string() for v in self._values])
+    def get_length(self):
+        return self._length
 
-        print "%s:\t%s" % (self._length, txt)
+    def get_raw_text(self):
+        if self._hasnumber:
+            return "".join([v.as_string() for v in self._values])
+        else:
+            return " ".join([v.as_string() for v in self._values])
 
 if __name__ == "__main__":
     w = gtk.Window()

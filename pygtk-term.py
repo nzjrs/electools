@@ -12,7 +12,7 @@ import brownout.HexView as hexview
 
 class UI:
     def __init__(self):
-        self.echo = True
+        self.echo = False
         self.watch = None        
 
         vb = gtk.VBox(spacing=4)
@@ -24,6 +24,7 @@ class UI:
         vb.pack_start(sc, expand=False, fill=False)
 
         self.term = vte.Terminal()
+        self.term.connect("commit", self._on_text_entered_in_terminal)
         vb.pack_start(self.term, expand=True, fill=True)
 
         entry = rawentry.MyEntry()
@@ -42,6 +43,13 @@ class UI:
         w.connect('delete-event', lambda *w: gtk.main_quit())
         w.show_all()
 
+    def _send_text(self, txt):
+        if self.echo:
+            self.term.feed(txt)
+            if self.hv:
+                self.hv.set_payload(txt)
+        self.serial.get_serial().write(txt)
+
     def _on_serial_connected(self, serial, connected):
         if connected:
             #remove the old watch
@@ -59,15 +67,15 @@ class UI:
     def _on_serial_data_available(self, fd, condition):
         dat = self.serial.get_serial().read()
         self.term.feed(dat)
+        if self.hv:
+            self.hv.set_payload(dat)
         return True
 
-    def _on_entry_activate(self, entry):
-        txt = entry.get_raw_text()
+    def _on_text_entered_in_terminal(self, term, txt, length):
+        self._send_text(txt)
 
-        if self.echo:
-            self.term.feed(txt)
-            if self.hv:
-                self.hv.set_payload(txt)
+    def _on_entry_activate(self, entry):
+        self._send_text(entry.get_raw_text())
 
     def _expander_callback(self, expander, *args):
         if expander.get_expanded():

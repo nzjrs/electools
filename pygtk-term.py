@@ -11,9 +11,9 @@ import brownout.RawEntry as rawentry
 import brownout.HexView as hexview
 
 class UI:
-    def __init__(self):
+    def __init__(self, echo=False, expander=True):
+        self._watch = None        
         self.echo = False
-        self.watch = None        
 
         vb = gtk.VBox(spacing=4)
         vb.set_border_width(4)
@@ -23,41 +23,53 @@ class UI:
         sc = libserial.SerialChooser(self.serial)
         vb.pack_start(sc, expand=False, fill=False)
 
-        self.term = vte.Terminal()
-        self.term.connect("commit", self._on_text_entered_in_terminal)
-        vb.pack_start(self.term, expand=True, fill=True)
+        self.terminal = vte.Terminal()
+        self.terminal.connect("commit", self._on_text_entered_in_terminal)
+        vb.pack_start(self.terminal, expand=True, fill=True)
 
         entry = rawentry.MyEntry()
         entry.connect("activate", self._on_entry_activate)
         vb.pack_start(entry, expand=False, fill=False)
 
-        #store the hex view in an expander, only create said view
-        #when revealed the first time
-        expander = gtk.expander_new_with_mnemonic("_Hex View")
-        expander.connect("notify::expanded", self._expander_callback)
-        vb.pack_start(expander, expand=False, fill=False)
-        self.hv = None
+        #store the hex view in an expander
+        #only create said viewwhen revealed the first time
+        if expander:
+            exp = gtk.expander_new_with_mnemonic("_Hex View")
+            exp.connect("notify::expanded", self._expander_callback)
+            vb.pack_start(exp, expand=False, fill=False)
+        self.hexview = None
+        self._hexbuf = ""
 
         w = gtk.Window()
         w.add(vb)
         w.connect('delete-event', lambda *w: gtk.main_quit())
         w.show_all()
 
+    def _show_text(self, txt):
+        self.terminal.feed(txt)
+        if self.hexview:
+            if len(txt) + len(self._hexbuf) > 80:
+                self._hexbuf = txt
+            else:
+                self._hexbuf += txt
+            self.hexview.set_payload(self._hexbuf)
+
+
     def _send_text(self, txt):
         if self.echo:
-            self.term.feed(txt)
-            if self.hv:
-                self.hv.set_payload(txt)
-        self.serial.get_serial().write(txt)
+            self._show_text(txt)
+        ser = self.serial.get_serial()
+        if ser:
+            ser.write(txt)
 
     def _on_serial_connected(self, serial, connected):
         if connected:
             #remove the old watch
-            if self.watch:
-                gobject.source_remove(self.watch)
+            if self._watch:
+                gobject.source_remove(self._watch)
 
             #add new watch
-            self.watch = gobject.io_add_watch(
+            self._watch = gobject.io_add_watch(
                             serial.get_serial().fileno(), 
                             gobject.IO_IN | gobject.IO_PRI,
                             self._on_serial_data_available,
@@ -65,10 +77,7 @@ class UI:
             )
 
     def _on_serial_data_available(self, fd, condition):
-        dat = self.serial.get_serial().read()
-        self.term.feed(dat)
-        if self.hv:
-            self.hv.set_payload(dat)
+        self._show_text(self.serial.get_serial().read())
         return True
 
     def _on_text_entered_in_terminal(self, term, txt, length):
@@ -79,13 +88,14 @@ class UI:
 
     def _expander_callback(self, expander, *args):
         if expander.get_expanded():
-            if not self.hv:
-                self.hv = hexview.HexView()
-                self.hv.set_border_width(0)
-                expander.add(self.hv)
+            if not self.hexview:
+                self.hexview = hexview.HexView()
+                self.hexview.set_border_width(0)
+                expander.add(self.hexview)
             expander.show_all()
         else:
-            self.hv.hide_all()
+            expander.remove(self.hexview)
+            self.hexview = None
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)

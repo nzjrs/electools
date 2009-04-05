@@ -15,45 +15,39 @@ class _String:
     length = property(get_len)
 
 class _Number:
-    def __init__(self, val):
+    def __init__(self, val, chunk):
         self._val = val
+        self._chunk = chunk
+    def as_string(self):
+        return chr(self._val)
+    def as_markup(self):
+        return '<span underline="single" underline_color="%s">%s</span>' % (self.color, self._chunk)
     is_number = True
     length = 1
+    color = ""
 
-class _Space(_Number):
-    def as_string(self):
-        return ' '
-    def as_markup(self):
-        return '<span underline="single" underline_color="green"> </span>'
-    is_number = False
+CHAR_REPLACE = {
+    "\\t"   :   "\t",
+    "\\a"   :   "\a",
+    "\\b"   :   "\b",
+    "\\f"   :   "\f",
+    "\\n"   :   "\n",
+    "\\r"   :   "\r",
+    "\\t"   :   "\t",
+    "\\v"   :   "\v"
+}
 
 class _Char(_Number):
-    REPLACE = {
-        "\\t"   :   "\t",
-        "\\a"   :   "\a",
-        "\\b"   :   "\b",
-        "\\f"   :   "\f",
-        "\\n"   :   "\n",
-        "\\r"   :   "\r",
-        "\\t"   :   "\t",
-        "\\v"   :   "\v"
-    }
-    def as_string(self):
-        return _Char.REPLACE[self._val]
-    def as_markup(self):
-        return '<span underline="single" underline_color="green">%s</span>' % self._val
+    color = "green"
 
 class _Hex(_Number):
-    def as_string(self):
-        return chr(self._val)
-    def as_markup(self):
-        return '<span underline="single" underline_color="red">0x%X</span>' % self._val
+    color = "red"
 
 class _Int(_Number):
-    def as_string(self):
-        return chr(self._val)
-    def as_markup(self):
-        return '<span underline="single" underline_color="blue">#%d</span>' % self._val
+    color = "blue"
+
+class _Binary(_Number):
+    color = "yellow"
 
 class MyEntry(gtk.Entry):
     def __init__(self):
@@ -73,27 +67,35 @@ class MyEntry(gtk.Entry):
 
         #check for space
         if chunk == '':
-            return _Space(chunk)
+            return _String(' ')
 
-        #try hex
         if len(chunk) > 2:
-            try:
-                val = int(chunk, 16)
-                if val <= 0xFF:
-                    return _Hex(val)
-            except ValueError: pass
+            #try binary
+            if chunk[0:2] == "0b":
+                try:
+                    val = int(chunk[2:], 2)
+                    if val <= 0xFF:
+                        return _Binary(val, chunk)
+                except ValueError: pass
+            #try hex
+            if chunk[0:2] == "0x":
+                try:
+                    val = int(chunk[2:], 16)
+                    if val <= 0xFF:
+                        return _Hex(val, chunk)
+                except ValueError: pass
 
         #try integer
-        if len(chunk) > 1:
+        if len(chunk) > 1 and chunk[0] == "#":
             try:
                 val = int(chunk[1:], 10)
                 if val <= 0xFF:
-                    return _Int(val)
+                    return _Int(val, chunk)
             except ValueError: pass
 
         #try char
-        if len(chunk) == 2 and chunk in _Char.REPLACE:
-            return _Char(chunk)
+        if len(chunk) == 2 and chunk in CHAR_REPLACE:
+            return _Char(CHAR_REPLACE[chunk], chunk)
 
         #else it is a string
         return _String(chunk)

@@ -116,5 +116,5 @@ if __name__ == "__main__":
         "/home/john/Desktop/arduino-read-only/build/linux/work/hardware/cores/arduino/HardwareSerial.cpp",
         "/home/john/Desktop/arduino-read-only/build/linux/work/hardware/cores/arduino/Print.cpp"
     ]
-    c.compile_me("/home/john/Programming/electools.git/data/testmain.cpp", a)
+    c.compile_me("/home/john/Programming/electools.git/test/testmain.cpp", a)
 

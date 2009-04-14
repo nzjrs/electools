@@ -1,0 +1,3 @@
+[submodule "brownout/libserial"]
+	path = brownout/libserial
+	url = git://github.com/nzjrs/libserial.git

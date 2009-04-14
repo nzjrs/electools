@@ -1,0 +1,3 @@
+[submodule "libserial"]
+	path = libserial
+	url = git://github.com/nzjrs/libserial.git

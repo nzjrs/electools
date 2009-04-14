@@ -5,6 +5,9 @@ import gtk
 import vte
 
 import libserial
+import libserial.SerialSender as SerialSender
+import libserial.SerialChooser as SerialChooser
+
 import RawEntry
 import HexView
 
@@ -16,9 +19,12 @@ class Terminal(gtk.VBox):
 
         self.set_border_width(4)
 
-        self.serial = libserial.SerialSender()
+        self.serial = SerialSender.SerialSender()
         self.serial.connect("serial-connected", self._on_serial_connected)
-        sc = libserial.SerialChooser(self.serial)
+        sc = SerialChooser.SerialChooser(
+                            sender=self.serial,
+                            ports=libserial.get_ports(),
+                            speeds=libserial.get_speeds())
         self.pack_start(sc, expand=False, fill=False)
 
         self.terminal = vte.Terminal()

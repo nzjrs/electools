@@ -91,7 +91,11 @@ class Terminal(gtk.VBox):
             self.hexview = None
 
 if __name__ == "__main__":
+    import logging
     logging.basicConfig(level=logging.DEBUG)
 
-    u = UI()
+    w = gtk.Window()
+    w.connect('delete-event', lambda *w: gtk.main_quit())
+    w.add(Terminal())
+    w.show_all()
     gtk.main()

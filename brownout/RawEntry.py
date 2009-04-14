@@ -135,7 +135,11 @@ class MyEntry(gtk.Entry):
             return " ".join([v.as_string() for v in self._values])
 
 if __name__ == "__main__":
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
+
     w = gtk.Window()
+    w.connect('delete-event', lambda *w: gtk.main_quit())
     w.add(MyEntry())
     w.show_all()
     gtk.main()

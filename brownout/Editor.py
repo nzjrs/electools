@@ -63,10 +63,14 @@ class Editor(gtk.VBox):
         self._b.place_cursor(self._b.get_start_iter())
 
 if __name__ == '__main__':
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
+
     e = Editor()
     e.open_file("data/testmain.cpp")
 
     w = gtk.Window()
+    w.connect('delete-event', lambda *w: gtk.main_quit())
     w.set_default_size(500, 500)
     w.add(e)
     w.show_all()

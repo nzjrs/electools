@@ -12,6 +12,10 @@ import RawEntry
 import HexView
 
 class Terminal(gtk.VBox):
+
+    BACKSPACE = True
+    DELETE = True
+
     def __init__(self, echo=False, expander=True):
         gtk.VBox.__init__(self, spacing=4)
         self._watch = None        
@@ -30,6 +34,26 @@ class Terminal(gtk.VBox):
         self.terminal = vte.Terminal()
         self.terminal.connect("commit", self._on_text_entered_in_terminal)
         self.pack_start(self.terminal, expand=True, fill=True)
+
+        #tell vte to not get in the way of backspace/delete
+        #
+        #python-vte bindings don't appear to support this constant, 
+        #so the magic values are being assumed from the C enum :/
+        if self.BACKSPACE:
+            #backbind = vte.ERASE_ASCII_BACKSPACE
+            backbind = 2
+        else:
+            #backbind = vte.ERASE_AUTO_BACKSPACE
+            backbind = 1
+
+        if self.DELETE:
+            #delbind = vte.ERASE_DELETE_SEQUENCE
+            delbind = 3
+        else:
+            #delbind = vte.ERASE_AUTO
+            delbind = 0
+        self.terminal.set_backspace_binding (backbind)
+        self.terminal.set_delete_binding (delbind)
 
         entry = RawEntry.MyEntry()
         entry.connect("activate", self._on_entry_activate)

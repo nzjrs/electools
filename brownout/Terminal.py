@@ -86,11 +86,11 @@ class Terminal(gtk.VBox):
             ser.write(txt)
 
     def _on_serial_connected(self, serial, connected):
-        if connected:
-            #remove the old watch
-            if self._watch:
-                gobject.source_remove(self._watch)
+        #remove the old watch
+        if self._watch:
+            gobject.source_remove(self._watch)
 
+        if connected:
             #add new watch
             self._watch = gobject.io_add_watch(
                             serial.get_serial().fileno(), 

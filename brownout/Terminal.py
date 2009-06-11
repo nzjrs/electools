@@ -55,9 +55,19 @@ class Terminal(gtk.VBox):
         self.terminal.set_backspace_binding (backbind)
         self.terminal.set_delete_binding (delbind)
 
+        hb = gtk.HBox(spacing=2)
+        self.pack_start(hb, expand=False, fill=True)
+
         entry = RawEntry.MyEntry()
         entry.connect("activate", self._on_entry_activate)
-        self.pack_start(entry, expand=False, fill=False)
+        hb.pack_start(entry, expand=True, fill=True)
+
+        lbl = gtk.Label("0")
+        lbl.set_width_chars(4)
+        lbl.set_justify(gtk.JUSTIFY_RIGHT)
+        hb.pack_start(lbl, expand=False, fill=False)
+
+        entry.connect("changed", self._on_entry_changed, lbl)
 
         #store the hex view in an expander
         #only create said viewwhen revealed the first time
@@ -105,6 +115,9 @@ class Terminal(gtk.VBox):
 
     def _on_text_entered_in_terminal(self, term, txt, length):
         self._send_text(txt)
+
+    def _on_entry_changed(self, entry, lbl):
+        lbl.set_text(str(entry.get_length()))
 
     def _on_entry_activate(self, entry):
         self._send_text(entry.get_raw_text())

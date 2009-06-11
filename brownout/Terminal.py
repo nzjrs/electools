@@ -16,10 +16,10 @@ class Terminal(gtk.VBox):
     BACKSPACE = True
     DELETE = True
 
-    def __init__(self, echo=False, expander=True):
+    def __init__(self, echo, expander):
         gtk.VBox.__init__(self, spacing=4)
         self._watch = None        
-        self.echo = False
+        self.echo = echo
 
         self.set_border_width(4)
 
@@ -125,7 +125,10 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
 
     w = gtk.Window()
+    t = Terminal(False, True)
+
+
     w.connect('delete-event', lambda *w: gtk.main_quit())
-    w.add(Terminal())
+    w.add(t)
     w.show_all()
     gtk.main()

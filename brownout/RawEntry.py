@@ -11,8 +11,11 @@ class _String:
         return '<span underline="single" underline_color="green">%s</span>' % glib.markup_escape_text(self._val)
     def get_len(self):
         return len(self._val)
+    def get_text_length(self):
+        return self.get_len()
     is_number = False
     length = property(get_len)
+    name = "string"
 
 class _Number:
     def __init__(self, val, chunk):
@@ -22,6 +25,8 @@ class _Number:
         return chr(self._val)
     def as_markup(self):
         return '<span underline="single" underline_color="%s">%s</span>' % (self.color, self._chunk)
+    def get_text_length(self):
+        return len(self._chunk)
     is_number = True
     length = 1
     color = ""
@@ -39,18 +44,22 @@ CHAR_REPLACE = {
 
 class _Char(_Number):
     color = "green"
+    name = "character"
 
 class _Hex(_Number):
     color = "red"
+    name = "hexidecimal number"
 
 class _Int(_Number):
     color = "blue"
+    name = "integer number"
 
 class _Binary(_Number):
     color = "yellow"
+    name = "binary number"
 
 class MyEntry(gtk.Entry):
-    def __init__(self):
+    def __init__(self, enable_tooltips=False):
         gtk.Entry.__init__(self)
 
         self._length = 0
@@ -61,6 +70,35 @@ class MyEntry(gtk.Entry):
 
         self.connect("changed", self._on_change)
         self.connect("expose-event", self._on_expose)
+
+        if enable_tooltips:
+            self.props.has_tooltip = True
+            self.connect("query-tooltip", self._on_query_tooltip)
+
+    def _on_query_tooltip(self, widget, x, y, keyboard_tip, tooltip, data=None):
+        if keyboard_tip:
+            return False
+
+        offx, offy = self.get_layout_offsets()
+        layout = self.get_layout()
+        index = layout.xy_to_index(
+                        int((offx+x)*pango.SCALE),
+                        int((offy+y)*pango.SCALE))[0]
+
+        #find the hovered entry in the entered values
+        i = 1
+        hover_val = None
+        for val in self._values:
+            val_len = val.get_text_length()
+            if index >= i and index < (i+val.get_text_length()):
+                hover_val = val
+            i += (val_len + 1)
+
+        if hover_val:
+            tooltip.set_markup("%s (%s)" % (hover_val.name, hover_val.length))
+            return True
+
+        return False
 
     def _get_value(self, chunk):
         print "###", chunk
@@ -140,6 +178,6 @@ if __name__ == "__main__":
 
     w = gtk.Window()
     w.connect('delete-event', lambda *w: gtk.main_quit())
-    w.add(MyEntry())
+    w.add(MyEntry(enable_tooltips=True))
     w.show_all()
     gtk.main()

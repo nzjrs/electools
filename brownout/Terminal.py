@@ -58,7 +58,7 @@ class Terminal(gtk.VBox):
         hb = gtk.HBox(spacing=2)
         self.pack_start(hb, expand=False, fill=True)
 
-        entry = RawEntry.MyEntry()
+        entry = RawEntry.MyEntry(enable_tooltips=True)
         entry.connect("activate", self._on_entry_activate)
         hb.pack_start(entry, expand=True, fill=True)
 

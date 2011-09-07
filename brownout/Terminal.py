@@ -62,14 +62,14 @@ class Terminal(gtk.VBox):
         entry.connect("activate", self._on_entry_activate)
         hb.pack_start(entry, expand=True, fill=True)
 
-        lbl = gtk.Label("0")
+        lbl = gtk.Label("0B")
         lbl.set_width_chars(4)
         lbl.set_justify(gtk.JUSTIFY_RIGHT)
         hb.pack_start(lbl, expand=False, fill=False)
 
         if enable_tooltips:
             lbl.props.has_tooltip = True
-            lbl.connect("query-tooltip", self._on_lbl_tooltip)
+            lbl.connect("query-tooltip", self._on_lbl_tooltip, entry)
 
         entry.connect("changed", self._on_entry_changed, lbl)
 
@@ -121,13 +121,13 @@ class Terminal(gtk.VBox):
         self._send_text(txt)
 
     def _on_entry_changed(self, entry, lbl):
-        lbl.set_text(str(entry.get_length()))
+        lbl.set_text("%dB" % entry.get_length())
 
-    def _on_lbl_tooltip(self, widget, x, y, keyboard_tip, tooltip):
+    def _on_lbl_tooltip(self, widget, x, y, keyboard_tip, tooltip, entry):
         if keyboard_tip:
             return False
 
-        tooltip.set_text("%s bytes" % widget.get_text())
+        tooltip.set_text("%d bytes" % entry.get_length())
         return True
 
     def _on_entry_activate(self, entry):

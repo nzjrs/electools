@@ -95,7 +95,7 @@ class MyEntry(gtk.Entry):
             i += (val_len + 1)
 
         if hover_val:
-            tooltip.set_markup("%s (%s)" % (hover_val.name, hover_val.length))
+            tooltip.set_markup("%s (%dB)" % (hover_val.name, hover_val.length))
             return True
 
         return False

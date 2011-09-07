@@ -16,7 +16,7 @@ class Terminal(gtk.VBox):
     BACKSPACE = True
     DELETE = True
 
-    def __init__(self, echo, expander):
+    def __init__(self, echo, expander, enable_tooltips):
         gtk.VBox.__init__(self, spacing=4)
         self._watch = None        
         self.echo = echo
@@ -58,7 +58,7 @@ class Terminal(gtk.VBox):
         hb = gtk.HBox(spacing=2)
         self.pack_start(hb, expand=False, fill=True)
 
-        entry = RawEntry.MyEntry(enable_tooltips=True)
+        entry = RawEntry.MyEntry(enable_tooltips)
         entry.connect("activate", self._on_entry_activate)
         hb.pack_start(entry, expand=True, fill=True)
 
@@ -66,6 +66,10 @@ class Terminal(gtk.VBox):
         lbl.set_width_chars(4)
         lbl.set_justify(gtk.JUSTIFY_RIGHT)
         hb.pack_start(lbl, expand=False, fill=False)
+
+        if enable_tooltips:
+            lbl.props.has_tooltip = True
+            lbl.connect("query-tooltip", self._on_lbl_tooltip)
 
         entry.connect("changed", self._on_entry_changed, lbl)
 
@@ -118,6 +122,13 @@ class Terminal(gtk.VBox):
 
     def _on_entry_changed(self, entry, lbl):
         lbl.set_text(str(entry.get_length()))
+
+    def _on_lbl_tooltip(self, widget, x, y, keyboard_tip, tooltip):
+        if keyboard_tip:
+            return False
+
+        tooltip.set_text("%s bytes" % widget.get_text())
+        return True
 
     def _on_entry_activate(self, entry):
         self._send_text(entry.get_raw_text())

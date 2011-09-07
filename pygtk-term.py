@@ -9,7 +9,8 @@ class UI:
         w = gtk.Window()
         t = terminal.Terminal(
                 echo=echo,
-                expander=expander
+                expander=expander,
+                enable_tooltips=True
         )
 
         w.set_title("Terminal")
